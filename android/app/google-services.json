@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "452556427282",
+    "project_id": "readup-eeaad",
+    "storage_bucket": "readup-eeaad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:452556427282:android:520e546a78a5af4a25c8cb",
+        "android_client_info": {
+          "package_name": "com.elysiahuang.testapp3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "452556427282-orhtv9dek4bnsbttgf7eb638o20c5lha.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elysiahuang.testapp3",
+            "certificate_hash": "e6c4f3664286acbd0168b7cd62f6e663298ae14a"
+          }
+        },
+        {
+          "client_id": "452556427282-eg8gun227afo58d79p4iiq6kfbnobkpu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9Rq9FXlKWJk6CihSrUsxYiejIuMyhPuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "452556427282-eg8gun227afo58d79p4iiq6kfbnobkpu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "452556427282-rn9h0mflha9d5fj3manbpvvqqsjndrh9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.elysiahuang.testapp3"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
