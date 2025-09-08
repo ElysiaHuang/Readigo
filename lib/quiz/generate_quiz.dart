@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp3/quiz/quiz.dart';
 
 class generatequizscreen extends StatefulWidget {
   const generatequizscreen({super.key});
@@ -86,7 +87,9 @@ class _generatequizscreenState extends State<generatequizscreen> {
         Text("How many questions",style: TextStyle(color: CupertinoColors.systemGrey),),
         SizedBox(height: 40,),
         ElevatedButton(
-          onPressed: (){},
+          onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (_) => quizscreen (book: "The Hunger Games", numberOfQuestion: _numberofquestions.toInt(), difficulty: _questionDifficulty.toInt())));
+          },
           child: Container(
             child: Center(child: Text(
               "Start Quiz",
