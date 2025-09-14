@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp3/friends/friends.dart';
 import 'package:testapp3/profile.dart';
 import 'package:testapp3/quiz/generate_quiz.dart';
 
@@ -15,7 +16,7 @@ class homepage extends StatefulWidget {
 class _homepageState extends State<homepage> {
   List<Widget> pages=[
    generatequizscreen(),
-    Text("friends"),
+    friendspage(),
     Text("books"),
     profilescreen(),
   ];
@@ -36,6 +37,7 @@ class _homepageState extends State<homepage> {
           children: [
             Text("Readigo",
               style: TextStyle(
+                fontSize: 36,
                   color: Colors.lightBlueAccent,
                   fontWeight: FontWeight.w500,
                   shadows: [Shadow(color: Colors.greenAccent,offset: Offset(3, 3),blurRadius: 15)]
