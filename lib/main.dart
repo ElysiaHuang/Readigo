@@ -5,7 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:testapp3/gradebook.dart';
 import 'package:testapp3/homepage.dart';
 import 'package:testapp3/landing.dart';
-import 'package:testapp3/profile.dart';
+import 'package:testapp3/profile/profile.dart';
 import 'package:testapp3/search.dart';
 import 'firebase_options.dart';
 void main() async {

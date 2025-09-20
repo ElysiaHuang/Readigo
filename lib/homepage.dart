@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp3/friends/friends.dart';
-import 'package:testapp3/profile.dart';
+import 'package:testapp3/profile/profile.dart';
 import 'package:testapp3/quiz/generate_quiz.dart';
 
 import 'gradebook.dart';
