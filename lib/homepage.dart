@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp3/books/bookscreen.dart';
 import 'package:testapp3/friends/friends.dart';
 import 'package:testapp3/profile/profile.dart';
 import 'package:testapp3/quiz/generate_quiz.dart';
@@ -17,7 +18,7 @@ class _homepageState extends State<homepage> {
   List<Widget> pages=[
    generatequizscreen(),
     friendspage(),
-    Text("books"),
+    bookscreen(),
     profilescreen(),
   ];
 

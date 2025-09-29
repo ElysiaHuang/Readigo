@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:testapp3/homepage.dart';
 
 class start_page extends StatefulWidget {
   const start_page({super.key});
@@ -27,7 +28,9 @@ class _start_pageState extends State<start_page> {
                       shadows: [Shadow(color: Colors.greenAccent,offset: Offset(3, 3),blurRadius: 15)]),)
             ),
             ElevatedButton(
-                onPressed: (){},
+                onPressed: (){
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>homepage()));
+                },
                 child: Container(
                     child: Center(child: Text(
                         "Tap here to get \nreading",

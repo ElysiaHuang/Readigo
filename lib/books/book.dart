@@ -1,0 +1,32 @@
+class Book {
+  final String title;
+  final List<String> authors;
+  final int? pageCount;
+  final String? description;
+  final String? thumbnailUrl;
+  final int? wordcount;
+
+
+
+
+  Book({
+    required this.title,
+    required this.authors,
+    this.pageCount,
+    this.description,
+    this.thumbnailUrl,
+    this.wordcount,
+  });
+  factory Book.fromJson(Map<String, dynamic> json) {
+    final volumeInfo = json["volumeInfo"] ?? {};
+    final imageLinks = volumeInfo["imageLinks"] ?? {};
+    return Book(
+      title: volumeInfo["title"] ?? "Unknown",
+      authors: List<String>.from(volumeInfo["authors"] ?? []),
+      pageCount: volumeInfo["pageCount"],
+      wordcount:int.parse (volumeInfo["pageCount"])*300,
+      description: volumeInfo["description"],
+      thumbnailUrl: imageLinks["thumbnail"],
+    );
+  }
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:testapp3/LogInPage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:testapp3/books/preview.dart';
 import 'package:testapp3/gradebook.dart';
 import 'package:testapp3/homepage.dart';
 import 'package:testapp3/landing.dart';
@@ -38,8 +39,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:homepage()
-      //LandingPage()
+      home:BookPreview()
 
     );
   }
