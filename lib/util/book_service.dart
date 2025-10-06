@@ -11,7 +11,7 @@ class BookService{
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final List items = data["items"] ?? [];
-      print("HELLLLLLO");
+      print(items);
       return items.map((item) => Book.fromJson(item)).toList();
     } else {
       throw Exception("Failed to load books");

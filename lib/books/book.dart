@@ -5,6 +5,7 @@ class Book {
   final String? description;
   final String? thumbnailUrl;
   final int? wordcount;
+  final String? shopurl;
 
 
 
@@ -16,6 +17,7 @@ class Book {
     this.description,
     this.thumbnailUrl,
     this.wordcount,
+    this.shopurl
   });
   factory Book.fromJson(Map<String, dynamic> json) {
     final volumeInfo = json["volumeInfo"] ?? {};
@@ -24,9 +26,10 @@ class Book {
       title: volumeInfo["title"] ?? "Unknown",
       authors: List<String>.from(volumeInfo["authors"] ?? []),
       pageCount: volumeInfo["pageCount"],
-      wordcount:int.parse (volumeInfo["pageCount"])*300,
+      wordcount: (volumeInfo["pageCount"])*300,
       description: volumeInfo["description"],
       thumbnailUrl: imageLinks["thumbnail"],
+      shopurl: json["accessInfo"]["webReaderLink"]
     );
   }
 }

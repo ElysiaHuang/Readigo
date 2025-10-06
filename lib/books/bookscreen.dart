@@ -57,6 +57,7 @@ class _bookscreenState extends State<bookscreen> {
           height: 60,
         ),
         Expanded(
+          flex: 80,
           child: _futureBooks == null
               ? Center(child: Text("Search for a book"))
               : FutureBuilder<List<Book>>(
@@ -79,9 +80,11 @@ class _bookscreenState extends State<bookscreen> {
                     bookImageurl: book.thumbnailUrl ??
                         "https://via.placeholder.com/150",
                     title: book.title,
-                    author: book.authors.toString(),
-                    words: book.wordcount.toString(),
-                    grade: "book.gradeText",
+                    author: book.authors.join(
+                      " "
+                    ),
+                    pages: book.pageCount.toString()+" pages",
+                    grade: "book.gradeText", shopurl: book.shopurl.toString(),
                   );
                 },
               );
