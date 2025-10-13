@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp3/books/book_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../homepage.dart';
+import 'book.dart';
 
 class BookPreview extends StatefulWidget {
   final String bookImageurl;
   final String title;
   final String author;
-  final String pages;
+  final int pages;
   final String grade;
   final String shopurl;
   const BookPreview({super.key,required this.bookImageurl,required this.title,required this.author,required this.pages,required this.grade,required this.shopurl});
@@ -17,22 +23,34 @@ class BookPreview extends StatefulWidget {
 class _BookPreviewState extends State<BookPreview> {
   @override
   Widget build(BuildContext context) {
+    final bookProvider = context.read<BookProvider>();
+
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 70,
+        automaticallyImplyLeading: true, // keeps back button if needed
+        centerTitle: true, // centers within screen width
         title: Row(
+          mainAxisSize: MainAxisSize.min, // only take as much space as needed
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Readigo",
+            Text(
+              'Readigo',
               style: TextStyle(
-                  fontSize: 36,
-                  color: Colors.lightBlueAccent,
-                  fontWeight: FontWeight.w500,
-                  shadows: [Shadow(color: Colors.greenAccent,offset: Offset(3, 3),blurRadius: 15)]
+                fontSize: 36,
+                color: Colors.lightBlueAccent,
+                fontWeight: FontWeight.w600,
+                  shadows: [
+                    Shadow(color: Colors.greenAccent,offset: Offset(3, 3),blurRadius: 15)
+                  ]
               ),
             ),
-            Image.asset(height: 87,"assets/images/ReadigoLogo.png")
-
+            const SizedBox(width: 8),
+            Image.asset(
+              'assets/images/ReadigoLogo.png',
+              height: 87,
+              fit: BoxFit.contain,
+            ),
           ],
         ),
       ),
@@ -56,7 +74,7 @@ class _BookPreviewState extends State<BookPreview> {
                   child: Center(
                     child: Column(
                       children: [
-                        Text(widget.pages,style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
+                        Text(widget.pages.toString() + " pages",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
                         //Text((int.parse(widget.pages)*300).toString()+" words",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
                         Text("Grade Level:5-6",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
                       ],
@@ -66,19 +84,49 @@ class _BookPreviewState extends State<BookPreview> {
 
               ],
             ),
-          ),ElevatedButton(
-            onPressed: (){
-
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final Uri url = Uri.parse(widget.shopurl);
+              if(!await launchUrl(url)){
+                throw Exception("Could not launch url: $url");
+              }
             },
-            child: Container(
+            style: OutlinedButton.styleFrom(
+                backgroundColor: Color(0xFFEBFFEE),
+                foregroundColor: Color(0xFF41BF41),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)
+                )
+
+            ),
+            child: SizedBox(
+              width: 120, height: 50,
               child: Center(child: Text(
                 "📖Read it",
                 style: TextStyle(color: Color(0xFF00C8B3),
                   fontSize: 20,),
                 textAlign: TextAlign.center,
               )),
-              width: 120, height: 50,
             ),
+          ),
+          SizedBox(height: 20,),
+          ElevatedButton(
+            onPressed: (){
+              bookProvider.setBook(
+                  Book(
+                    title: widget.title,
+                    authors: [widget.author],
+                    pageCount: widget.pages,
+                    thumbnailUrl: widget.bookImageurl,
+                    shopurl: widget.shopurl,
+                  )
+              );
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                  context, MaterialPageRoute(
+                  builder: (_) => homepage(initialPage: 0)));
+            },
             style: OutlinedButton.styleFrom(
                 backgroundColor: Color(0xFFEBFFEE),
                 foregroundColor: Color(0xFF41BF41),
@@ -87,28 +135,14 @@ class _BookPreviewState extends State<BookPreview> {
                 )
 
             ),
-          ),
-          SizedBox(height: 20,),
-          ElevatedButton(
-            onPressed: (){
-
-            },
-            child: Container(
+            child: SizedBox(
+              width: 120, height: 50,
               child: Center(child: Text(
                 "📝Quiz Me❓❓❓",
                 style: TextStyle(color: Color(0xFF00C8B3),
                   fontSize: 20,),
                 textAlign: TextAlign.center,
               )),
-              width: 120, height: 50,
-            ),
-            style: OutlinedButton.styleFrom(
-                backgroundColor: Color(0xFFEBFFEE),
-                foregroundColor: Color(0xFF41BF41),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)
-                )
-
             ),
           ),
           SizedBox(height: 20,),
@@ -116,15 +150,6 @@ class _BookPreviewState extends State<BookPreview> {
             onPressed: (){
 
             },
-            child: Container(
-              child: Center(child: Text(
-                "Add to Library📚",
-                style: TextStyle(color: Color(0xFF00C8B3),
-                  fontSize: 20,),
-                textAlign: TextAlign.center,
-              )),
-              width: 150, height: 50,
-            ),
             style: OutlinedButton.styleFrom(
                 backgroundColor: Color(0xFFEBFFEE),
                 foregroundColor: Color(0xFF41BF41),
@@ -132,6 +157,15 @@ class _BookPreviewState extends State<BookPreview> {
                     borderRadius: BorderRadius.circular(12)
                 )
 
+            ),
+            child: SizedBox(
+              width: 150, height: 50,
+              child: Center(child: Text(
+                "Add to Library📚",
+                style: TextStyle(color: Color(0xFF00C8B3),
+                  fontSize: 20,),
+                textAlign: TextAlign.center,
+              )),
             ),
           ),
         ],),

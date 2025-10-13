@@ -27,7 +27,7 @@ android {
         applicationId = "com.elysiahuang.testapp3"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         ndkVersion = "27.0.12077973"
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

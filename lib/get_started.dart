@@ -29,7 +29,7 @@ class _start_pageState extends State<start_page> {
             ),
             ElevatedButton(
                 onPressed: (){
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>homepage()));
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>homepage(initialPage: 0,)));
                 },
                 child: Container(
                     child: Center(child: Text(

@@ -8,7 +8,9 @@ import 'package:testapp3/quiz/generate_quiz.dart';
 import 'gradebook.dart';
 
 class homepage extends StatefulWidget {
-  const homepage({super.key});
+  final initialPage;
+
+  const homepage({super.key, required this.initialPage});
 
   @override
   State<homepage> createState() => _homepageState();
@@ -22,7 +24,7 @@ class _homepageState extends State<homepage> {
     profilescreen(),
   ];
 
-  int selectedpage=0;
+  late int selectedpage=widget.initialPage;
   void onItemTap(int index){
     setState(() {
       selectedpage=index;
