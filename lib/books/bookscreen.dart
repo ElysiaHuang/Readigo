@@ -83,7 +83,7 @@ class _bookscreenState extends State<bookscreen> {
                     author: book.authors.join(
                       " "
                     ),
-                    pages: book.pageCount.toString()+" pages",
+                    pages: book.pageCount,
                     grade: "book.gradeText", shopurl: book.shopurl.toString(),
                   );
                 },
