@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:testapp3/books/Review.dart';
 import 'package:testapp3/books/book_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -132,7 +133,7 @@ class _BookPreviewState extends State<BookPreview> {
           SizedBox(height: 20,),
           ElevatedButton(
             onPressed: (){
-
+              Navigator.push(context, MaterialPageRoute(builder: (_)=>BookReviewPage(title: widget.title, author: widget.author)));
             },
             style: OutlinedButton.styleFrom(
                 backgroundColor: Color(0xFFEBFFEE),
