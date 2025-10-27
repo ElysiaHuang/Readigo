@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class profilescreen extends StatefulWidget {
@@ -8,6 +10,16 @@ class profilescreen extends StatefulWidget {
 }
 
 class _profilescreenState extends State<profilescreen> {
+  Future<void> getbookstolibrary()async{
+    try {
+      final useremail=FirebaseAuth.instance.currentUser!.email;//get current users email
+      DocumentReference doc=FirebaseFirestore.instance.collection("users").doc(useremail);//get users data in firebase
+      final userData =await doc.get();
+      final books=userData["books"];
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,7 +115,13 @@ class _profilescreenState extends State<profilescreen> {
 
                 ],
               ),
-        )
+            ),
+            Expanded(
+                child: FutureBuilder(
+                    future: future,
+                    builder: builder
+                )
+            )
           ],
         ),
       )

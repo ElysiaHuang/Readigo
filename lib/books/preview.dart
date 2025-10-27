@@ -133,7 +133,7 @@ class _BookPreviewState extends State<BookPreview> {
           SizedBox(height: 20,),
           ElevatedButton(
             onPressed: (){
-              Navigator.push(context, MaterialPageRoute(builder: (_)=>BookReviewPage(title: widget.title, author: widget.author)));
+              Navigator.push(context, MaterialPageRoute(builder: (_)=>BookReviewPage(title: widget.title, author: widget.author,imageurl: widget.bookImageurl,)));
             },
             style: OutlinedButton.styleFrom(
                 backgroundColor: Color(0xFFEBFFEE),

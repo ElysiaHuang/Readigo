@@ -1,19 +1,41 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 class BookReviewPage extends StatefulWidget {
   final String title;
   final String author;
-  const BookReviewPage({super.key,required this.title,required this.author});
+  final String imageurl;
+  const BookReviewPage({super.key,required this.title,required this.author,required this.imageurl});
 
   @override
   State<BookReviewPage> createState() => _BookReviewPageState();
 }
 
 class _BookReviewPageState extends State<BookReviewPage> {
+  final Reviewcontroller=TextEditingController();
   int starrating= 1;
+  String reviewtext="";
   void changestarrating(int newrating){
     setState(() {
       starrating=newrating;
     });
+  }
+  Future<void> addbooktolibrary()async{
+    try {
+      final useremail=FirebaseAuth.instance.currentUser!.email;//get current users email
+      DocumentReference doc=FirebaseFirestore.instance.collection("users").doc(useremail);//get users data in firebase
+      await doc.update({
+        "books":FieldValue.arrayUnion([{//adding book to books list in users data
+          "title":widget.title,//
+          "author": widget.author,
+          "imageurl":widget.imageurl,
+          "rating":starrating,
+          "review":reviewtext
+        }])
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
   }
   @override
   Widget build(BuildContext context) {
@@ -47,6 +69,10 @@ class _BookReviewPageState extends State<BookReviewPage> {
           ),
           SizedBox( width: 300, height: 150,
             child: TextField(
+              controller: Reviewcontroller,
+              onChanged: (text){
+                reviewtext=text;
+              },
               minLines: 5,
               maxLines: 5,
               decoration: InputDecoration(
@@ -122,6 +148,7 @@ class _BookReviewPageState extends State<BookReviewPage> {
               SizedBox(height: 20,),
               ElevatedButton(
                 onPressed: (){
+                  addbooktolibrary();
                 },
                 style: OutlinedButton.styleFrom(
                     backgroundColor: Color(0xFFEBFFEE),

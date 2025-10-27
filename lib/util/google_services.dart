@@ -19,20 +19,28 @@ class GoogleServices{
 
       // Once signed in, return the UserCredential
       await FirebaseAuth.instance.signInWithCredential(credential);
+      adduser(googleUser!.displayName, googleUser.email);
        return true;
     } catch (e) {
       print('$e');
       return false;
     }
   }
-  static Future<void> adduser(String Username,String email)async{
+  static Future<void> adduser(String? Username,String email)async{
     CollectionReference users= FirebaseFirestore.instance.collection("users");
-    users.add({
-      "username":Username,
-      "email": email,
-      "dateCreated":FieldValue.serverTimestamp()
+    try {
+      DocumentSnapshot docRef=await users.doc(email).get();
+      if(!docRef.exists)
+        users.doc(email).set({
+          "username":Username,
+          "email": email,
+          "dateCreated":FieldValue.serverTimestamp(),
+          "books": []
+        });
+    } catch (e) {
+      print("caught");
+    }
 
-    });
   }
 }
 
