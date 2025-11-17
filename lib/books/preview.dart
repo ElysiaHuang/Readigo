@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp3/books/Review.dart';
 import 'package:testapp3/books/book_provider.dart';
+import 'package:testapp3/util/openai_prompt.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../homepage.dart';
@@ -25,6 +26,21 @@ class BookPreview extends StatefulWidget {
 }
 
 class _BookPreviewState extends State<BookPreview> {
+  int gradeLevel = -1;
+
+  void getGradeLevel() async {
+    final futureGradeLevel = await OpenaiPrompt.getBookGradeLevel(widget.title);
+    setState(() {
+      gradeLevel = futureGradeLevel;
+    });
+  }
+
+  @override
+  void initState(){
+    super.initState();
+    getGradeLevel();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bookprovider=context.read<BookProvider>();
@@ -69,7 +85,7 @@ class _BookPreviewState extends State<BookPreview> {
                       children: [
                         Text(widget.pages.toString()+" pages",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
                         //Text((int.parse(widget.pages)*300).toString()+" words",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
-                        Text("Grade Level:5-6",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
+                        (gradeLevel == -1) ? CircularProgressIndicator() : Text("Grade Level: $gradeLevel",style: TextStyle(fontSize: 30,fontFamily: "Voltaire"),),
                       ],
                     ),
                   ),
@@ -84,7 +100,7 @@ class _BookPreviewState extends State<BookPreview> {
                 onPressed: () async {
                   final Uri Url=Uri.parse(widget.shopurl);
                   if  (!await launchUrl(Url)){
-                    print("cannot open url");
+                    throw Exception("cannot open url");
                   }
                 },
                 style: OutlinedButton.styleFrom(
@@ -139,7 +155,8 @@ class _BookPreviewState extends State<BookPreview> {
               SizedBox(height: 20,),
               ElevatedButton(
                 onPressed: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (_)=>BookReviewPage(title: widget.title, author: widget.author,imageurl: widget.bookImageurl,)));
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_)=>BookReviewPage(title: widget.title, author: widget.author,imageurl: widget.bookImageurl, pages: widget.pages,)));
                 },
                 style: OutlinedButton.styleFrom(
                     backgroundColor: Color(0xFFEBFFEE),

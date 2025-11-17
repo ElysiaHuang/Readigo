@@ -2,6 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp3/CreateAccount.dart';
+import 'package:testapp3/util/firebase_utils.dart';
+
+import 'get_started.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +17,32 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final emailController=TextEditingController();
   final passwordController=TextEditingController();
+
+  Future<void> signIn()async {
+    String email=emailController.text.trim();
+    String password=passwordController.text.trim();
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      if(mounted){
+        Navigator.pop(context);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => start_page()));
+      }
+    } on FirebaseAuthException catch (e) {
+      if(mounted){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message.toString()),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.blueAccent,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,28 +125,19 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: OutlinedButton.icon(
                   onPressed: (){
-          // Validate will return true if the form is valid, or false if
-          // the form is invalid.
-          if (_formKey.currentState!.validate()) {
-              String email=emailController.text.trim();
-              String password=passwordController.text.trim();
-              try {
-              FirebaseAuth.instance.signInWithEmailAndPassword(
-              email: email,
-              password: password,
-              );
-              } on FirebaseAuthException catch (e) {
-              print('Error: ${e.code} - ${e.message}');
-              }
-              }
+                    // Validate will return true if the form is valid, or false if
+                    // the form is invalid.
+                    if (_formKey.currentState!.validate()) {
+                      signIn();
+                    }
                   },
-                  label: Text("Submit"),
-                  style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xFFC0FFC0),
-                      foregroundColor: Color(0xFF41BF41)
-                  ),
+            label: Text("Submit"),
+            style: OutlinedButton.styleFrom(
+                backgroundColor: Color(0xFFC0FFC0),
+                foregroundColor: Color(0xFF41BF41)
+            ),
 
-                )),
+          )),
               SizedBox(height: 1,),
               Text("Don't have an account?"),
               TextButton(

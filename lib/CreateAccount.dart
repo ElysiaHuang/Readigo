@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:testapp3/LogInPage.dart';
+import 'package:testapp3/util/firebase_utils.dart';
 import 'package:testapp3/util/google_services.dart';
 
 import 'get_started.dart';
@@ -23,13 +25,26 @@ class _CreateAccountState extends State<Createaccount> {
     String password=passwordController.text.trim();
     String username=usernameController.text.trim();
     try {
-      FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      GoogleServices.adduser(username, email);
+      if(await FirebaseUtils.adduser(username, email)){
+        if(mounted){
+          Navigator.pop(context);
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginPage()));
+        }
+      }
     } on FirebaseAuthException catch (e) {
-      print('Error: ${e.code} - ${e.message}');
+      if(mounted){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message.toString()),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.blueAccent,
+          ),
+        );
+      }
     }
   }
   @override

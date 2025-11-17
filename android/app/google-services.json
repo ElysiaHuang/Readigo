@@ -1,49 +1,71 @@
 {
   "project_info": {
-    "project_number": "452556427282",
-    "project_id": "readup-eeaad",
-    "storage_bucket": "readup-eeaad.firebasestorage.app"
+    "project_number": "550818826311",
+    "project_id": "readigo",
+    "storage_bucket": "readigo.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:452556427282:android:520e546a78a5af4a25c8cb",
+        "mobilesdk_app_id": "1:550818826311:android:90137f298cfc5a7e094962",
         "android_client_info": {
-          "package_name": "com.elysiahuang.testapp3"
+          "package_name": "com.elysiahuang.readigo"
         }
       },
       "oauth_client": [
         {
-          "client_id": "452556427282-orhtv9dek4bnsbttgf7eb638o20c5lha.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.elysiahuang.testapp3",
-            "certificate_hash": "e6c4f3664286acbd0168b7cd62f6e663298ae14a"
-          }
-        },
-        {
-          "client_id": "452556427282-eg8gun227afo58d79p4iiq6kfbnobkpu.apps.googleusercontent.com",
+          "client_id": "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyB9Rq9FXlKWJk6CihSrUsxYiejIuMyhPuE"
+          "current_key": "AIzaSyBogp3LB4hEjLPzpBVp2SgxkDqL__AGAl0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "452556427282-eg8gun227afo58d79p4iiq6kfbnobkpu.apps.googleusercontent.com",
+              "client_id": "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com",
               "client_type": 3
-            },
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:550818826311:android:8f45d45ca0b8653c094962",
+        "android_client_info": {
+          "package_name": "com.elysiahuang.testapp3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "550818826311-ssfnm00pc3o731tlvfe60jp8gedns5gp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elysiahuang.testapp3",
+            "certificate_hash": "429355793dccad1034200b6a3ee094a7d939e067"
+          }
+        },
+        {
+          "client_id": "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBogp3LB4hEjLPzpBVp2SgxkDqL__AGAl0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
             {
-              "client_id": "452556427282-rn9h0mflha9d5fj3manbpvvqqsjndrh9.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.elysiahuang.testapp3"
-              }
+              "client_id": "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com",
+              "client_type": 3
             }
           ]
         }

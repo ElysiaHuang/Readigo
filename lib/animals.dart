@@ -32,7 +32,6 @@ class AnimalScreen extends StatelessWidget {
         ),
       ),);
     }
-    print(mini);
     return Scaffold(
       appBar:AppBar(
         title: Text(name),

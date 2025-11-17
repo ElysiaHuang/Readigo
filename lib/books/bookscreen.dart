@@ -70,12 +70,10 @@ class _bookscreenState extends State<bookscreen> {
                 return Center(child: Text("No results"));
               }
               final books = snapshot.data!;
-              print(books);
               return ListView.builder(
                 itemCount: books.length,
                 itemBuilder: (context, index) {
                   final book = books[index];
-                  print(book);
                   return BookTile(
                     review: false,
                     bookImageurl: book.thumbnailUrl ??

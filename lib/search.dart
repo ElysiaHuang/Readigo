@@ -15,7 +15,6 @@ class _SearchPageState extends State<SearchPage> {
   void do_something(){
     setState(() {
       String Input=SearchController.text;
-      print(Input);
     });
   }
   @override

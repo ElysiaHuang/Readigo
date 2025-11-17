@@ -23,7 +23,7 @@ class BookTile extends StatelessWidget {
           pages: pages,
           grade: grade,
           bookImageurl: bookImageurl,
-          shopurl:shopurl,review: true,rating: rating,ReviewText: ReviewText
+          shopurl:shopurl,review: review,rating: rating,ReviewText: ReviewText
         )));
       },
       child: Container(
@@ -48,7 +48,7 @@ class BookTile extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(title,style: TextStyle(fontSize: 25,fontFamily: "Voltaire"),),
+                    Text(title, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 25,fontFamily: "Voltaire"),),
                     Text(author,style: TextStyle(fontSize: 22,fontFamily: "Voltaire"),),
                     (review)?
                     Row(

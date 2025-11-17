@@ -1,119 +1,99 @@
-import 'dart:convert';
-
-import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:testapp3/quiz/page_indicator.dart';
+import 'package:testapp3/quiz/quiz_result.dart';
 import 'package:testapp3/quiz/quizquestion.dart';
+import 'package:testapp3/util/openai_prompt.dart';
 
-class quizscreen extends StatefulWidget {
+import '../util/constants.dart';
+
+class QuizScreen extends StatefulWidget {
   final String book;
   final int numberOfQuestion;
   final int difficulty;
-  const quizscreen({super.key,required this.book,required this.numberOfQuestion,required this.difficulty});
+  const QuizScreen({super.key,required this.book,required this.numberOfQuestion,required this.difficulty});
 
   @override
-  State<quizscreen> createState() => _quizscreenState();
+  State<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _quizscreenState extends State<quizscreen> {
+class _QuizScreenState extends State<QuizScreen> {
   List<dynamic> questions = [];
-
-  late final OpenAI _openAI;
+  List<int> selectedAnswers = [];
   bool _isLoading = true;
+  int _currentPage = 0;
 
-  @override
-  void initState() {
-    // Initialize ChatGPT SDK
-    _openAI = OpenAI.instance.build(
-      token: dotenv.env['openai_key'],
-      baseOption: HttpSetup(
-        receiveTimeout: const Duration(seconds: 30),
-      ),
-    );
-    _handleInitialMessage();
-    super.initState();
-  }
-  Future<void> _handleInitialMessage() async {
-    String userPrompt = "Give me ${widget.numberOfQuestion} questions on the book ${widget.book}."
-        "If the difficulty scale was 1-5, make the questions at level ${widget.difficulty}."
-        "Give the questions, 4 choices, and the correct answer in a dictionary format like this:"
-        "[{\"question\": \"What is blah\", \"choices\": [\"choice1\", \"choice2\", \"choice3\", \"choice4\"], \"answer\": 0}]"
-        "Each question should be in its own dictionary. The 'answer' key should be the index of the correct answer from"
-        "the \"choices\" list."
-        "Only give me the list of dictionaries. Do not put a beginning \"spiel\" or any formatting. Give me only the raw data.";
-
-    final request = ChatCompleteText(
-      messages: [
-        Map.of({"role": "user", "content": userPrompt})
-      ],
-      model: Gpt4OChatModel(),
-      maxToken: 1500,
-    );
-    ChatCTResponse? response = await _openAI.onChatCompletion(request: request);
+  void loadQuestions() async {
+    questions = await OpenaiPrompt.generateQuizQuestions(widget.numberOfQuestion, widget.book, widget.difficulty);
+    selectedAnswers = List.filled(questions.length, 0);
 
     setState(() {
-      String rawData = response!.choices.first.message!.content.trim();
       _isLoading = false;
-
-      // Parse string into JSON object
-      questions = jsonDecode(rawData);
       print(questions);
     });
   }
+
+  void updateSelectedAnswer(int index, int value){
+    setState(() {
+      selectedAnswers[index] = value;
+    });
+
+    print(selectedAnswers);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadQuestions();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:AppBar(
-        centerTitle: true,
-        toolbarHeight: 70,
-        title: Center(
-          child: Row(
-            children: [
-              Text("Readigo",
-                style: TextStyle(
-                    color: Colors.lightBlueAccent,
-                    fontWeight: FontWeight.w500,
-                    shadows: [Shadow(color: Colors.greenAccent,offset: Offset(3, 3),blurRadius: 15)]
-                ),
-              ),
-              Image.asset(height: 87,"assets/images/ReadigoLogo.png")
-
-            ],
-          ),
-        ),
-      ),
+      appBar: Constants.defaultAppBar,
       body: Center(
         child: Column(
           children: [
             Text("Quiz",style: TextStyle(fontSize: 35,fontFamily: "Voltaire"),),
-            SizedBox(
-              height: 630,
+            SizedBox(height: 30,),
+            Expanded(
               child: PageView(
+                onPageChanged: (page) {
+                  setState(() {
+                    _currentPage = page;
+                  });
+                },
                 children: [
                   if (!_isLoading)
-                    for (var questionMap in questions)
-                      Quizquestion(
+                    ...questions.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final questionMap = entry.value;
+
+                      return QuizQuestion(
+                        index: index,
+                        selectedValue: selectedAnswers[index],
                         question: questionMap["question"],
                         choices: List<String>.from(questionMap["choices"]),
-                      )
+                        onChanged: updateSelectedAnswer,
+                      );
+                    })
                   else
-                    Center(child: SizedBox(width: 50, height: 50, child: const CircularProgressIndicator())),
+                    const Center(
+                      child: SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
                 ],
               ),
             ),
-            ElevatedButton(
+            PageIndicator(count: questions.length, currentIndex: _currentPage),
+            SizedBox(height: 20,),
+            (!_isLoading) ? ElevatedButton(
               onPressed: (){
-
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => QuizResultPage(questions: questions, selectedAnswers: selectedAnswers, difficulty: widget.difficulty,)));
               },
-              child: Container(
-                child: Center(child: Text(
-                  "Start Quiz",
-                  style: TextStyle(color: Color(0xFF00C8B3),
-                    fontSize: 20,),
-                  textAlign: TextAlign.center,
-                )),
-                width: 120, height: 50,
-              ),
               style: OutlinedButton.styleFrom(
                   backgroundColor: Color(0xFFEBFFEE),
                   foregroundColor: Color(0xFF41BF41),
@@ -122,7 +102,17 @@ class _quizscreenState extends State<quizscreen> {
                 )
 
               ),
-            ),
+              child: SizedBox(
+                width: 120, height: 50,
+                child: Center(child: Text(
+                  "Submit Quiz",
+                  style: TextStyle(color: Color(0xFF00C8B3),
+                    fontSize: 20,),
+                  textAlign: TextAlign.center,
+                )),
+              ),
+            ) : Container(),
+            SizedBox(height: 50,)
           ],
         ),
       ),

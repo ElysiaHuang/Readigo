@@ -1,13 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import 'firebase_utils.dart';
 
 class GoogleServices{
   static Future<bool> signInWithGoogle() async {
     try {
       final _googleSignIn = GoogleSignIn.instance;
       _googleSignIn.initialize(
-          serverClientId: "452556427282-eg8gun227afo58d79p4iiq6kfbnobkpu.apps.googleusercontent.com"
+          serverClientId: "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com"
       );
 
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
@@ -19,28 +20,13 @@ class GoogleServices{
 
       // Once signed in, return the UserCredential
       await FirebaseAuth.instance.signInWithCredential(credential);
-      adduser(googleUser!.displayName, googleUser.email);
+      FirebaseUtils.adduser(googleUser.displayName, googleUser.email);
        return true;
     } catch (e) {
       print('$e');
       return false;
     }
   }
-  static Future<void> adduser(String? Username,String email)async{
-    CollectionReference users= FirebaseFirestore.instance.collection("users");
-    try {
-      DocumentSnapshot docRef=await users.doc(email).get();
-      if(!docRef.exists)
-        users.doc(email).set({
-          "username":Username,
-          "email": email,
-          "dateCreated":FieldValue.serverTimestamp(),
-          "books": []
-        });
-    } catch (e) {
-      print("caught");
-    }
 
-  }
 }
 

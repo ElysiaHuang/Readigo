@@ -53,10 +53,11 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB9Rq9FXlKWJk6CihSrUsxYiejIuMyhPuE',
-    appId: '1:452556427282:android:520e546a78a5af4a25c8cb',
-    messagingSenderId: '452556427282',
-    projectId: 'readup-eeaad',
-    storageBucket: 'readup-eeaad.firebasestorage.app',
+    apiKey: 'AIzaSyBogp3LB4hEjLPzpBVp2SgxkDqL__AGAl0',
+    appId: '1:550818826311:android:90137f298cfc5a7e094962',
+    messagingSenderId: '550818826311',
+    projectId: 'readigo',
+    storageBucket: 'readigo.firebasestorage.app',
   );
+
 }

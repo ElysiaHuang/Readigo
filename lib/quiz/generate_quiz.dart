@@ -32,15 +32,15 @@ class _generatequizscreenState extends State<generatequizscreen> {
           },
           child: Container(
             width:300 , height: 120,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey5,
+              borderRadius: BorderRadius.circular(55)
+            ),
             child: Center(
                 child: Text(
                     "Tap here to \n select a book",
                   textAlign: TextAlign.center,
                 ),
-            ),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey5,
-              borderRadius: BorderRadius.circular(55)
             ),
           ),
         ):BookTile(bookImageurl: book.thumbnailUrl, title: book.title, author: book.authors.join(" "), pages: book.pageCount, grade: "5-6", shopurl: book.shopurl),
@@ -104,7 +104,7 @@ class _generatequizscreenState extends State<generatequizscreen> {
             if(book==null){
               null;
             }else {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => quizscreen (book: book.title, numberOfQuestion: _numberofquestions.toInt(), difficulty: _questionDifficulty.toInt())));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => QuizScreen(book: book.title, numberOfQuestion: _numberofquestions.toInt(), difficulty: _questionDifficulty.toInt())));
             }
 
 
