@@ -1,131 +1,116 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:testapp3/books/book_tile.dart';
+import 'package:testapp3/components/page_intro.dart';
+import 'package:testapp3/components/quest_dashboard.dart';
 import 'package:testapp3/homepage.dart';
-import 'package:testapp3/quiz/quiz.dart';
+import 'package:testapp3/util/constants.dart';
+import 'package:testapp3/util/firebase_utils.dart';
 
-import '../books/book_provider.dart';
-
-class generatequizscreen extends StatefulWidget {
-  const generatequizscreen({super.key});
+class QuestsPage extends StatefulWidget {
+  const QuestsPage({super.key});
 
   @override
-  State<generatequizscreen> createState() => _generatequizscreenState();
+  State<QuestsPage> createState() => _QuestsPageState();
 }
 
-class _generatequizscreenState extends State<generatequizscreen> {
-  double _questionDifficulty=1;
-  double _numberofquestions=5;
+class _QuestsPageState extends State<QuestsPage> {
+  late final Future<String?> _friendCodeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _friendCodeFuture = FirebaseUtils.getCurrentUserFriendCode();
+  }
+
+  void _openBooks() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage(initialpage: 2)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final book=context.watch<BookProvider>().book;
-    return Column(
-      children: [
-        SizedBox(height: 25,),
-        Text("Quiz",style: TextStyle(fontSize: 35,fontFamily: "Voltaire"),),
-        SizedBox(height: 50,),
-        (book==null)?
-        GestureDetector(
-          onTap: (){
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>homepage(initialpage: 2)));
-          },
-          child: Container(
-            width:300 , height: 120,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(8, 18, 8, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const PageIntro(title: 'Quests'),
+          const SizedBox(height: 18),
+          FutureBuilder<String?>(
+            future: _friendCodeFuture,
+            builder: (context, snapshot) {
+              final friendCode = snapshot.data;
+              if (friendCode == null || friendCode.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return StreamBuilder<Map<String, dynamic>?>(
+                stream: FirebaseUtils.watchUserData(friendCode),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting &&
+                      !userSnapshot.hasData) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 18),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (!userSnapshot.hasData || userSnapshot.data == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return QuestDashboard(userData: userSnapshot.data!);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey5,
-              borderRadius: BorderRadius.circular(55)
+              color: Constants.surfaceAlt,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Constants.border),
             ),
-            child: Center(
-                child: Text(
-                    "Tap here to \n select a book",
-                  textAlign: TextAlign.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Start a Quiz',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Open Books and pick a title.',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    height: 1.4,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: 180,
+                  child: ElevatedButton.icon(
+                    onPressed: _openBooks,
+                    icon: const Icon(Icons.menu_book_rounded),
+                    label: const Text('Open Books'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Constants.sky,
+                      foregroundColor: Constants.ink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ):BookTile(bookImageurl: book.thumbnailUrl, title: book.title, author: book.authors.join(" "), pages: book.pageCount, grade: "5-6", shopurl: book.shopurl),
-
-        SizedBox(
-          height: (book==null)?60:0,
-        ),
-        Container(
-          padding: EdgeInsets.only(
-            left: 10,right: 10
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Question difficulty"),
-              Text("Level ${_questionDifficulty.toInt()}")
-            ],
-          ),
-        ),
-        Slider(
-          value: _questionDifficulty,
-          min: 1,
-          max: 12,
-          divisions: 11,
-          onChanged: (double value){
-            setState(() {
-              _questionDifficulty=value;
-            });
-          },
-        ),
-        Text("How hard should the questions be",style: TextStyle(color: CupertinoColors.systemGrey),),
-        SizedBox(height: 50,),
-
-        Container(
-          padding: EdgeInsets.only(
-              left: 10,right: 10
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Number of questions"),
-              Text("${_numberofquestions.toInt()} questions")
-            ],
-          ),
-        ),
-        Slider(
-          value: _numberofquestions,
-          min: 5,
-          max: 25,
-          divisions: 4,
-          onChanged: (double value){
-            setState(() {
-              _numberofquestions=value;
-            });
-          },
-        ),
-        Text("How many questions",style: TextStyle(color: CupertinoColors.systemGrey),),
-        SizedBox(height: 40,),
-        ElevatedButton(
-          onPressed: (){
-            if(book==null){
-              null;
-            }else {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => QuizScreen(book: book.title, numberOfQuestion: _numberofquestions.toInt(), difficulty: _questionDifficulty.toInt())));
-            }
-
-
-          },
-          style: OutlinedButton.styleFrom(
-              backgroundColor: Color(0xFFC0FFC0),
-              foregroundColor: Color(0xFF41BF41)
-          ),
-          child: SizedBox(
-            width: 120, height: 50,
-            child: Center(child: Text(
-              "Start Quiz",
-              style: TextStyle(color: Colors.black,
-                  fontSize: 20,),
-              textAlign: TextAlign.center,
-            )),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
-
-

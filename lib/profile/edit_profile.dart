@@ -1,7 +1,13 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:testapp3/landing.dart';
+import 'package:testapp3/util/constants.dart';
+import 'package:testapp3/util/profile_avatar_options.dart';
+
 import '../util/firebase_utils.dart';
-import '../landing.dart';
+import '../util/google_services.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -21,24 +27,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
   late String selectedProfilePic;
   bool _saving = false;
-
-  final List<String> profilePicOptions = [
-    "https://imgcdn.stablediffusionweb.com/2024/4/15/437c2a91-01ea-4d6b-b7c4-d489155207f7.jpg",
-    "https://creator.nightcafe.studio/jobs/kWGLUgAwkj1kLLvcqvJD/kWGLUgAwkj1kLLvcqvJD--1--kgpmj.jpg",
-    "https://imgcdn.stablediffusionweb.com/2024/2/23/da8fbab2-4c52-469c-8f91-437b89850f61.jpg",
-    "https://creator.nightcafe.studio/jobs/UpYqKstniHmSEMYpoRnA/UpYqKstniHmSEMYpoRnA--3--ahniu.jpg"
-  ];
+  bool _deleting = false;
 
   @override
   void initState() {
     super.initState();
-
     _usernameController.text = widget.userData["username"] ?? "";
     _bioController.text = widget.userData["bio"] ?? "";
-    selectedProfilePic = widget.userData["profilePic"] ?? profilePicOptions.first;
+    selectedProfilePic =
+        widget.userData["profilePic"]?.toString().isNotEmpty == true
+            ? widget.userData["profilePic"].toString()
+            : defaultProfileAvatar;
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _bioController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveProfile() async {
@@ -47,11 +55,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _saving = true);
 
     final newData = <String, dynamic>{};
-
     final newUsername = _usernameController.text.trim();
     final newBio = _bioController.text.trim();
 
-    // Only add fields that changed
     if (newUsername != widget.userData["username"]) {
       newData["username"] = newUsername;
     }
@@ -62,275 +68,428 @@ class _EditProfilePageState extends State<EditProfilePage> {
       newData["profilePic"] = selectedProfilePic;
     }
 
-    if (newData.isNotEmpty) {
-      await FirebaseUtils.updateUser(widget.friendCode, newData);
-    }
-
-    setState(() => _saving = false);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile saved!")),
-      );
+    try {
+      if (newData.isNotEmpty) {
+        await FirebaseUtils.updateUser(widget.friendCode, newData);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Saved.')));
       Navigator.pop(context, true);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
-  Future<void> _showDeleteAccountDialog() async {
-    final passwordController = TextEditingController();
+  ImageProvider _getProfileImageProvider(String imageValue) {
+    if (imageValue.isEmpty) {
+      return const AssetImage(defaultProfileAvatar);
+    }
+    if (imageValue.startsWith('assets/')) {
+      return AssetImage(resolvedProfileAvatar(imageValue));
+    }
+    if (imageValue.startsWith('http')) {
+      return NetworkImage(imageValue);
+    }
+    if (File(imageValue).existsSync()) {
+      return FileImage(File(imageValue));
+    }
+    return const AssetImage(defaultProfileAvatar);
+  }
 
-    return showDialog(
+  Future<void> _showDeleteAccountDialog() async {
+    if (_deleting) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final useGoogle = user.providerData.any(
+      (provider) => provider.providerId == 'google.com',
+    );
+    String password = '';
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'This action cannot be undone. All your data will be permanently deleted.',
-                style: TextStyle(color: Colors.red),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete account'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  useGoogle
+                      ? 'Confirm with Google to delete your account, library, and conversations.'
+                      : 'Enter your password to delete your account, library, and conversations.',
+                ),
+                if (!useGoogle)
+                  TextField(
+                    obscureText: true,
+                    onChanged: (value) => password = value,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
               ),
-              const SizedBox(height: 20),
-              const Text('Please enter your password to confirm:'),
-              const SizedBox(height: 10),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      final credential =
+          useGoogle
+              ? await GoogleServices.credential()
+              : EmailAuthProvider.credential(
+                email: user.email!,
+                password: password,
+              );
+      await user.reauthenticateWithCredential(credential);
+      await user.getIdToken(true);
+      await FirebaseUtils.deleteUser(widget.friendCode);
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LandingPage()),
+        (_) => false,
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Deletion did not finish. You can retry. $error'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
+
+  Widget _buildAvatarPreview(String assetPath, {double size = 96}) {
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Constants.border, width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        resolvedProfileAvatar(assetPath),
+        fit: BoxFit.cover,
+        errorBuilder:
+            (_, __, ___) => Container(
+              color: Constants.sky.withValues(alpha: 0.18),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.pets_rounded,
+                color: Constants.ink,
+                size: 28,
+              ),
+            ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarChoice(ProfileAvatarOption avatar) {
+    final isSelected = selectedProfilePic == avatar.assetPath;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap:
+            _saving
+                ? null
+                : () {
+                  setState(() {
+                    selectedProfilePic = avatar.assetPath;
+                  });
+                },
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color:
+                isSelected
+                    ? Constants.sky.withValues(alpha: 0.22)
+                    : Constants.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? Constants.ink : Constants.border,
+              width: isSelected ? 2 : 1.2,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildAvatarPreview(avatar.assetPath, size: 54),
+              const SizedBox(height: 8),
+              Text(
+                avatar.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? Constants.ink : Constants.mutedInk,
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final password = passwordController.text.trim();
-                if (password.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter your password')),
-                  );
-                  return;
-                }
-
-                try {
-                  // Re-authenticate user before deletion
-                  final user = FirebaseAuth.instance.currentUser;
-                  final email = user?.email;
-
-                  if (email == null) {
-                    throw Exception('No user email found');
-                  }
-
-                  final credential = EmailAuthProvider.credential(
-                    email: email,
-                    password: password,
-                  );
-
-                  await user?.reauthenticateWithCredential(credential);
-
-                  // Close the dialog
-                  Navigator.of(dialogContext).pop();
-
-                  // Delete the user
-                  await FirebaseUtils.deleteUser(widget.friendCode);
-
-                  // Navigate to landing page
-                  if (mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LandingPage()),
-                      (route) => false,
-                    );
-                  }
-                } on FirebaseAuthException catch (e) {
-                  Navigator.of(dialogContext).pop();
-
-                  String errorMessage = 'Failed to delete account';
-                  if (e.code == 'wrong-password') {
-                    errorMessage = 'Incorrect password';
-                  } else if (e.code == 'requires-recent-login') {
-                    errorMessage = 'Please log out and log back in before deleting your account';
-                  }
-
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(errorMessage),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  Navigator.of(dialogContext).pop();
-
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: ${e.toString()}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete Account'),
-            ),
-          ],
-        );
-      },
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Username cannot be empty';
-                  }
-                  if (value.length < 3) return 'Minimum 3 characters';
-                  if (value.length > 15) return 'Maximum 15 characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-
-              TextFormField(
-                controller: _bioController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Bio',
-                  alignLabelWithHint: true,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              const Text(
-                "Choose Profile Picture",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: profilePicOptions.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final url = profilePicOptions[index];
-                    final isSelected = url == selectedProfilePic;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedProfilePic = url;
-                        });
-                      },
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: isSelected ? Colors.blue : Colors.grey,
-                                width: isSelected ? 3 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: NetworkImage(url),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Positioned(
-                              bottom: 4,
-                              right: 4,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.blue,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Danger Zone - Delete Account
-              const Divider(),
-              const SizedBox(height: 20),
-              const Text(
-                "Danger Zone",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _showDeleteAccountDialog,
-                icon: const Icon(Icons.delete_forever, color: Colors.red),
-                label: const Text(
-                  'Delete Account',
-                  style: TextStyle(color: Colors.red),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
-                  minimumSize: const Size(double.infinity, 48),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+      backgroundColor: Constants.background,
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(0, 10, 0, 110),
+          children: [
+            _buildProfileCard(),
+            const SizedBox(height: 14),
+            _buildDetailsCard(),
+            const SizedBox(height: 14),
+            _buildDangerCard(),
+          ],
         ),
       ),
-
-      // ▶ SAVE BUTTON AT THE BOTTOM
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
           child: SizedBox(
-            height: 50,
+            height: 54,
             child: ElevatedButton(
               onPressed: _saving ? null : _saveProfile,
-              child: _saving
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Save Changes"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Constants.ink,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              child:
+                  _saving
+                      ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Text(
+                        "Save",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Constants.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Constants.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Avatar',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Constants.ink,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Constants.border, width: 1.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Image(
+                  image: _getProfileImageProvider(selectedProfilePic),
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (_, __, ___) => Container(
+                        color: Constants.sky.withValues(alpha: 0.18),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.pets_rounded,
+                          color: Constants.ink,
+                          size: 28,
+                        ),
+                      ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Text(
+                  'Tap an animal below to change your profile picture.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.45,
+                    color: Constants.mutedInk,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth > 420 ? 4 : 3;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: profileAvatarOptions.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 0.86,
+                ),
+                itemBuilder:
+                    (context, index) =>
+                        _buildAvatarChoice(profileAvatarOptions[index]),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Constants.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Constants.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Profile',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Constants.ink,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _usernameController,
+            decoration: const InputDecoration(labelText: 'Username'),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Username cannot be empty';
+              }
+              if (value.length < 3) return 'Minimum 3 characters';
+              if (value.length > 40) return 'Maximum 40 characters';
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _bioController,
+            maxLines: 4,
+            maxLength: 500,
+            decoration: const InputDecoration(
+              labelText: 'Bio',
+              alignLabelWithHint: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDangerCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Constants.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Delete account',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Constants.ink,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _deleting ? null : _showDeleteAccountDialog,
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

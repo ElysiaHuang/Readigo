@@ -53,7 +53,7 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyBogp3LB4hEjLPzpBVp2SgxkDqL__AGAl0',
     appId: '1:550818826311:android:a9f617c460e7b6e3094962',
     messagingSenderId: '550818826311',
-    projectId: 'Bookfania',
+    projectId: 'readigo',
     storageBucket: 'readigo.firebasestorage.app',
   );
 
@@ -63,9 +63,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '550818826311',
     projectId: 'readigo',
     storageBucket: 'readigo.firebasestorage.app',
-    androidClientId: '550818826311-s28q13fk2ch4nveks1nrh8d8hvf7a25h.apps.googleusercontent.com',
-    iosClientId: '550818826311-i090sj0ijbgppfhvgbgol1et9t54hnvp.apps.googleusercontent.com',
+    androidClientId:
+        '550818826311-s28q13fk2ch4nveks1nrh8d8hvf7a25h.apps.googleusercontent.com',
+    iosClientId:
+        '550818826311-i090sj0ijbgppfhvgbgol1et9t54hnvp.apps.googleusercontent.com',
     iosBundleId: 'com.elysiahuang.testapp3',
   );
-
 }

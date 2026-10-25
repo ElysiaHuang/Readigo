@@ -23,10 +23,7 @@ class QuizQuestion extends StatelessWidget {
         Text(
           textAlign: TextAlign.center,
           question,
-          style: const TextStyle(
-            fontSize: 20,
-            fontFamily: "Voltaire",
-          ),
+          style: const TextStyle(fontSize: 20, fontFamily: "Voltaire"),
         ),
 
         const SizedBox(height: 20),
@@ -41,9 +38,10 @@ class QuizQuestion extends StatelessWidget {
                 },
 
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: (selectedValue == i)
-                      ? const Color(0xFF41BF41)   // selected
-                      : const Color(0xFFC0FFC0),  // unselected
+                  backgroundColor:
+                      (selectedValue == i)
+                          ? const Color(0xFF41BF41) // selected
+                          : const Color(0xFFC0FFC0), // unselected
                   foregroundColor: Colors.black,
                 ),
 

@@ -1,0 +1,4 @@
+storeFile=/absolute/path/to/protected/upload-keystore.jks
+storePassword=REPLACE_LOCALLY
+keyAlias=upload
+keyPassword=REPLACE_LOCALLY

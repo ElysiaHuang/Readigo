@@ -1,3 +1,5 @@
+> Historical classroom prototype write-up. For current features and architecture, see [README](README.md).
+
 # Readigo: An AI-Powered Reading Companion and Educational Platform for Enhancing Literacy and Comprehension Through Personalized Quizzes and Social Reading Engagement
 
 ## Background of the Invention (150 words)
@@ -21,11 +23,11 @@ The Friends section displays a searchable list of connected users, each shown as
 ## Screenshots
 
 ### Screenshot 1: Quiz Generation Screen
-![Quiz Screen](screenshot_quiz.png)
+![Quiz Screen](screenshots/Screenshot_20260117_135645.png)
 *The quiz generation interface showing book selection, difficulty slider (Level 1-12), and question count slider (5-25 questions)*
 
 ### Screenshot 2: User Profile and Library
-![Profile Screen](screenshot_profile.png)
+![Profile Screen](screenshots/Screenshot_20260117_135701.png)
 *The user profile displaying reading statistics, level progression, social connections, and personal library with reviews and ratings*
 
 ## Abstract of the Disclosure (100 words)

@@ -14,8 +14,12 @@
       },
       "oauth_client": [
         {
-          "client_id": "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com",
-          "client_type": 3
+          "client_id": "550818826311-bj5j09i2qd2p3vt5r92v26aekrtb6noj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elysiahuang.readigo",
+            "certificate_hash": "e6c4f3664286acbd0168b7cd62f6e663298ae14a"
+          }
         }
       ],
       "api_key": [
@@ -26,10 +30,6 @@
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
-            {
-              "client_id": "550818826311-9okroqsll4hhrma17qsfplkcc2er76ek.apps.googleusercontent.com",
-              "client_type": 3
-            },
             {
               "client_id": "550818826311-i090sj0ijbgppfhvgbgol1et9t54hnvp.apps.googleusercontent.com",
               "client_type": 2,

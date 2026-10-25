@@ -15,6 +15,7 @@ migrate_working_dir/
 # Environment variables (secrets)
 .env
 assets/.env
+dev-secrets.json
 
 # IntelliJ related
 *.iml
@@ -37,7 +38,6 @@ assets/.env
 .pub-cache/
 .pub/
 /build/
-pubspec.lock
 
 
 # Symbolication related
@@ -50,3 +50,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Server dependencies and private signing material
+node_modules/
+*.jks
+*.keystore
+key.properties
+functions/.secret.local
+functions/.env.*
+!functions/.env.example
+firebase-debug.log
+firestore-debug.log
+
+.pnpm-store/
