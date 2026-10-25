@@ -1,1 +1,37 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"readigo","appId":"1:550818826311:android:90137f298cfc5a7e094962","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"readigo","configurations":{"android":"1:550818826311:android:90137f298cfc5a7e094962"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "readigo",
+          "appId": "1:550818826311:android:a9f617c460e7b6e3094962",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "readigo",
+          "configurations": {
+            "android": "1:550818826311:android:a9f617c460e7b6e3094962",
+            "ios": "1:550818826311:ios:745dbb7e7f15695a094962"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
+  }
+}

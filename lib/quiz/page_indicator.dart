@@ -23,9 +23,10 @@ class PageIndicator extends StatelessWidget {
           width: isActive ? 20 : 10,
           height: 10,
           decoration: BoxDecoration(
-            color: isActive
-                ? const Color(0xFF41BF41)   // active color
-                : const Color(0xFFC0FFC0), // inactive
+            color:
+                isActive
+                    ? const Color(0xFF41BF41) // active color
+                    : const Color(0xFFC0FFC0), // inactive
             borderRadius: BorderRadius.circular(12),
           ),
         );

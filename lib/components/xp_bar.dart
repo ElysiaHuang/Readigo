@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:testapp3/util/constants.dart';
 
 class XPBar extends StatefulWidget {
   final int level;
@@ -43,17 +44,23 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
 
     // If there's no animation target, initialize animation to the current XP value
     if (widget.targetLevel == null || widget.targetXp == null) {
-      _animation = Tween<double>(begin: displayXp.toDouble(), end: displayXp.toDouble()).animate(
+      _animation = Tween<double>(
+        begin: displayXp.toDouble(),
+        end: displayXp.toDouble(),
+      ).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
       );
       // set controller to completed so AnimatedBuilder reads the value immediately
       _controller.value = 1.0;
     } else {
       // placeholder; actual tween will be set in _runAnimation calls
-      _animation = Tween<double>(begin: displayXp.toDouble(), end: displayXp.toDouble()).animate(_controller);
+      _animation = Tween<double>(
+        begin: displayXp.toDouble(),
+        end: displayXp.toDouble(),
+      ).animate(_controller);
       // start the multi-step animation after first frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _animateXP();
+        if (mounted) _animateXP();
       });
     }
   }
@@ -67,10 +74,12 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
     int curXp = displayXp;
     int curNext = displayNextLevelXp;
 
-    while (curLevel < targetLevel || (curLevel == targetLevel && curXp < targetXp)) {
+    while (curLevel < targetLevel ||
+        (curLevel == targetLevel && curXp < targetXp)) {
       final chunkEnd = (curLevel < targetLevel) ? curNext : targetXp;
 
       await _runAnimation(curXp, chunkEnd);
+      if (!mounted) return;
 
       // after running the animation to chunkEnd
       if (curLevel < targetLevel) {
@@ -84,6 +93,7 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
         });
         // small pause between level-ups
         await Future.delayed(const Duration(milliseconds: 150));
+        if (!mounted) return;
       } else {
         // final chunk finished
         setState(() {
@@ -96,9 +106,10 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
   }
 
   Future<void> _runAnimation(int start, int end) async {
-    _animation = Tween<double>(begin: start.toDouble(), end: end.toDouble()).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _animation = Tween<double>(
+      begin: start.toDouble(),
+      end: end.toDouble(),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.reset();
     await _controller.forward();
@@ -111,7 +122,10 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
       builder: (context, _) {
         // If no animation target was provided, _animation already holds the static XP
         final currentXpAnimated = _animation.value;
-        final percent = (displayNextLevelXp == 0) ? 0.0 : (currentXpAnimated / displayNextLevelXp).clamp(0.0, 1.0);
+        final percent =
+            (displayNextLevelXp == 0)
+                ? 0.0
+                : (currentXpAnimated / displayNextLevelXp).clamp(0.0, 1.0);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,8 +133,17 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Level ${displayLevel}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text("${currentXpAnimated.toInt()} / ${displayNextLevelXp} XP", style: const TextStyle(fontSize: 12)),
+                Text(
+                  "Level $displayLevel",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "${currentXpAnimated.toInt()} / $displayNextLevelXp XP",
+                  style: const TextStyle(fontSize: 12),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -129,7 +152,7 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
                 Container(
                   height: 18,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Constants.surfaceAlt,
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -138,7 +161,9 @@ class _XPBarState extends State<XPBar> with SingleTickerProviderStateMixin {
                   child: Container(
                     height: 18,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF41BF41), Color(0xFF00C8B3)]),
+                      gradient: const LinearGradient(
+                        colors: [Constants.sky, Constants.surfaceAlt],
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:testapp3/util/constants.dart';
 
 class DesignWrapper extends StatelessWidget {
   final Widget wrappedWidget;
@@ -9,27 +10,32 @@ class DesignWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 70,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Readigo",
-              style: TextStyle(
-                  fontSize: 36,
-                  color: Colors.lightBlueAccent,
-                  fontWeight: FontWeight.w500,
-                  shadows: [Shadow(color: Colors.greenAccent,offset: Offset(3, 3),blurRadius: 15)]
-              ),
-            ),
-            Image.asset(height: 87,"assets/images/ReadigoLogo.png")
-
-          ],
+        toolbarHeight: 58,
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: Constants.appBar,
+        foregroundColor: Constants.ink,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 16,
+        title: const Text(
+          "Bookfania",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Constants.ink,
+          ),
         ),
       ),
-      body: Center(
-        child: Container(
-          child: wrappedWidget,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Constants.butter, Constants.surfaceAlt],
+          ),
         ),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+        child: wrappedWidget,
       ),
     );
   }

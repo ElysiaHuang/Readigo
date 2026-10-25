@@ -12,11 +12,17 @@
 .swiftpm/
 migrate_working_dir/
 
+# Environment variables (secrets)
+.env
+assets/.env
+dev-secrets.json
+
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
+.claude/
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
@@ -33,8 +39,6 @@ migrate_working_dir/
 .pub/
 /build/
 
-.env
-assets/.env
 
 # Symbolication related
 app.*.symbols
@@ -46,3 +50,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Server dependencies and private signing material
+node_modules/
+*.jks
+*.keystore
+key.properties
+functions/.secret.local
+functions/.env.*
+!functions/.env.example
+firebase-debug.log
+firestore-debug.log
+
+.pnpm-store/

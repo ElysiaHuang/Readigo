@@ -26,10 +26,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -54,10 +51,22 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBogp3LB4hEjLPzpBVp2SgxkDqL__AGAl0',
-    appId: '1:550818826311:android:90137f298cfc5a7e094962',
+    appId: '1:550818826311:android:a9f617c460e7b6e3094962',
     messagingSenderId: '550818826311',
     projectId: 'readigo',
     storageBucket: 'readigo.firebasestorage.app',
   );
 
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDirSA0d68SSXC9O0uww5FKGZnw_dTxg-8',
+    appId: '1:550818826311:ios:745dbb7e7f15695a094962',
+    messagingSenderId: '550818826311',
+    projectId: 'readigo',
+    storageBucket: 'readigo.firebasestorage.app',
+    androidClientId:
+        '550818826311-s28q13fk2ch4nveks1nrh8d8hvf7a25h.apps.googleusercontent.com',
+    iosClientId:
+        '550818826311-i090sj0ijbgppfhvgbgol1et9t54hnvp.apps.googleusercontent.com',
+    iosBundleId: 'com.elysiahuang.testapp3',
+  );
 }

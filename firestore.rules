@@ -1,0 +1,234 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function mapping() { return get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data; }
+    function myCode() { return mapping().friendCode; }
+    function owns(code) { return signedIn() && myCode() == code; }
+    function deleting() { return signedIn() && mapping().get('deleting', false); }
+    function active() {
+      return signedIn() && !mapping().get('deleting', false)
+        && exists(/databases/$(database)/documents/users/$(myCode()))
+        && !get(/databases/$(database)/documents/users/$(myCode())).data.get('deleting', false);
+    }
+    function bounded(n) { return request.query.limit != null && request.query.limit <= n; }
+    function codeValid(code) { return code is string && code.matches('^[A-Z2-9]{5,12}$'); }
+    function str(value, max) { return value is string && value.size() <= max; }
+    function number(value, max) { return value is int && value >= 0 && value <= max; }
+    function privateKeys() {
+      return ['ownerUid', 'email', 'dateCreated', 'friends', 'blocked', 'streak_count',
+        'last_active_date', 'activity_dates', 'daily_quest_date', 'daily_quest_progress',
+        'monthly_quest_month', 'monthly_quest_progress', 'monthly_badges', 'deleting'];
+    }
+    function publicKeys() {
+      return ['username', 'username_lower', 'bio', 'profilePic', 'friendCode', 'level', 'xp',
+        'next_level_xp', 'books_count', 'league_current_index', 'league_current_week',
+        'league_weekly_score', 'league_history'];
+    }
+    function publicMatches(p, u) {
+      return p.keys().hasAll(publicKeys()) && p.keys().hasOnly(publicKeys().concat(['isOnline', 'lastSeen']))
+        && p.diff(u).affectedKeys().hasOnly(privateKeys().concat(['isOnline', 'lastSeen']));
+    }
+    function validUser(u, code) {
+      return u.keys().hasOnly(publicKeys().concat(privateKeys()))
+        && u.friendCode == code && str(u.username, 40) && u.username.size() > 0
+        && u.username_lower == u.username.lower() && str(u.bio, 500)
+        && u.profilePic in ['assets/images/avatars/cat.png', 'assets/images/avatars/dog.png',
+          'assets/images/avatars/giraffe.png', 'assets/images/avatars/horse.png',
+          'assets/images/avatars/lion.png', 'assets/images/avatars/polar-bear.png',
+          'assets/images/avatars/rabbit.png', 'assets/images/avatars/snake.png', 'assets/images/avatars/zebra.png']
+        && number(u.level, 100000) && u.level >= 1 && number(u.xp, u.level * 100 - 1)
+        && u.next_level_xp == u.level * 100 && number(u.books_count, 1000000)
+        && number(u.league_current_index, 9) && u.league_current_week.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && number(u.league_weekly_score, 100000000) && u.league_history is list && u.league_history.size() <= 12
+        && u.friends is list && u.friends.size() <= 200 && u.blocked is list && u.blocked.size() <= 500
+        && number(u.streak_count, 100000) && str(u.last_active_date, 10)
+        && u.activity_dates is list && u.activity_dates.size() <= 28
+        && str(u.daily_quest_date, 10) && u.daily_quest_progress is map
+        && u.daily_quest_progress.keys().hasOnly(['earn_xp', 'finish_quizzes', 'correct_answers'])
+        && number(u.daily_quest_progress.get('earn_xp', 0), 20)
+        && number(u.daily_quest_progress.get('finish_quizzes', 0), 2)
+        && number(u.daily_quest_progress.get('correct_answers', 0), 10)
+        && str(u.monthly_quest_month, 7) && number(u.monthly_quest_progress, 20)
+        && u.monthly_badges is list && u.monthly_badges.size() <= 120;
+    }
+    function linkedAfter(code) {
+      return signedIn()
+        && getAfter(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.friendCode == code
+        && getAfter(/databases/$(database)/documents/users/$(code)).data.ownerUid == request.auth.uid;
+    }
+    match /accounts/{uid} {
+      allow get: if signedIn() && uid == request.auth.uid;
+      allow create: if signedIn() && uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['friendCode']) && codeValid(request.resource.data.friendCode)
+        && linkedAfter(request.resource.data.friendCode)
+        && !exists(/databases/$(database)/documents/users/$(request.resource.data.friendCode));
+      // A private tombstone lets interrupted deletion resume after reauthentication.
+      allow update: if signedIn() && uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleting'])
+        && request.resource.data.deleting == true;
+      match /usage/{id} {
+        allow read, delete: if signedIn() && uid == request.auth.uid && deleting();
+      }
+    }
+    match /users/{code} {
+      allow get: if owns(code);
+      allow create: if codeValid(code) && linkedAfter(code)
+        && !exists(/databases/$(database)/documents/publicProfiles/$(code))
+        && validUser(request.resource.data, code) && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.email == request.auth.token.get('email', '')
+        && request.resource.data.dateCreated == request.time
+        && publicMatches(getAfter(/databases/$(database)/documents/publicProfiles/$(code)).data, request.resource.data)
+        && request.resource.data.xp == 0 && request.resource.data.level == 1
+        && request.resource.data.books_count == 0 && request.resource.data.league_weekly_score == 0
+        && request.resource.data.league_current_index == 0
+        && request.resource.data.friends.size() == 0 && request.resource.data.blocked.size() == 0;
+      // In this architecture progress belongs to the reader and is self-reported.
+      allow update: if owns(code) && active() && validUser(request.resource.data, code)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['ownerUid', 'email', 'friendCode', 'dateCreated', 'deleting'])
+        && publicMatches(getAfter(/databases/$(database)/documents/publicProfiles/$(code)).data, request.resource.data);
+      allow delete: if owns(code) && deleting()
+        && getAfter(/databases/$(database)/documents/publicProfiles/$(code)).data.deleted == true;
+    }
+    match /publicProfiles/{code} {
+      // Public reads also let signed-in newcomers check a random code reservation.
+      allow get: if signedIn();
+      allow list: if active() && bounded(100);
+      allow create: if linkedAfter(code)
+        && publicMatches(request.resource.data, getAfter(/databases/$(database)/documents/users/$(code)).data);
+      allow update: if owns(code) && (
+        (active() && publicMatches(request.resource.data, getAfter(/databases/$(database)/documents/users/$(code)).data)
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isOnline', 'lastSeen'])
+            || (request.resource.data.isOnline is bool && request.resource.data.lastSeen == request.time)))
+        || (deleting() && request.resource.data == {'friendCode': code, 'deleted': true})
+      );
+    }
+    match /libraries/{code}/books/{bookId} {
+      allow get: if owns(code);
+      allow list: if owns(code) && bounded(100);
+      allow create, update: if owns(code) && active()
+        && request.resource.data.keys().hasOnly(['bookId', 'title', 'author', 'imageurl', 'rating', 'review', 'pages', 'updatedAt'])
+        && str(request.resource.data.bookId, 100) && str(request.resource.data.title, 300) && request.resource.data.title.size() > 0
+        && str(request.resource.data.author, 300) && str(request.resource.data.imageurl, 2000)
+        && (request.resource.data.imageurl == '' || request.resource.data.imageurl.matches('https://.*'))
+        && number(request.resource.data.rating, 5) && request.resource.data.rating >= 1
+        && str(request.resource.data.review, 2000) && number(request.resource.data.pages, 100000)
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if owns(code);
+    }
+    function liveReader(code) {
+      let u = get(/databases/$(database)/documents/users/$(code)).data;
+      return !u.get('deleting', false)
+        && !get(/databases/$(database)/documents/accounts/$(u.ownerUid)).data.get('deleting', false);
+    }
+    function relationMember(r) { return signedIn() && myCode() in r.members; }
+    function missingRelationId(id) {
+      return active() && (id.matches('^' + myCode() + '_[A-Z2-9]{5,12}$')
+        || id.matches('^[A-Z2-9]{5,12}_' + myCode() + '$'));
+    }
+    function blocksMatch(r) {
+      return r.blockedBy is list && r.blockedBy.size() <= 2 && r.blockedBy.toSet().hasOnly(r.members)
+        && ((r.members[0] in r.blockedBy) == (r.members[1] in getAfter(/databases/$(database)/documents/users/$(r.members[0])).data.blocked))
+        && ((r.members[1] in r.blockedBy) == (r.members[0] in getAfter(/databases/$(database)/documents/users/$(r.members[1])).data.blocked));
+    }
+    match /relationships/{id} {
+      allow get: if (resource != null && relationMember(resource.data)) || (resource == null && missingRelationId(id));
+      allow list: if signedIn() && myCode() in resource.data.members && bounded(100);
+      allow create: if active() && request.resource.data.keys().hasOnly(['members', 'blockedBy'])
+        && request.resource.data.members is list && request.resource.data.members.size() == 2
+        && codeValid(request.resource.data.members[0]) && codeValid(request.resource.data.members[1])
+        && request.resource.data.members[0] < request.resource.data.members[1]
+        && id == request.resource.data.members[0] + '_' + request.resource.data.members[1]
+        && relationMember(request.resource.data) && liveReader(request.resource.data.members[0]) && liveReader(request.resource.data.members[1])
+        && blocksMatch(request.resource.data);
+      allow update: if active() && relationMember(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blockedBy'])
+        && blocksMatch(request.resource.data)
+        && request.resource.data.blockedBy.toSet().difference(resource.data.blockedBy.toSet()).hasOnly([myCode()])
+        && resource.data.blockedBy.toSet().difference(request.resource.data.blockedBy.toSet()).hasOnly([myCode()]);
+      allow delete: if relationMember(resource.data) && deleting();
+    }
+    function chatAllowed(id) {
+      let r = get(/databases/$(database)/documents/relationships/$(id)).data;
+      return active() && relationMember(r) && r.blockedBy.size() == 0
+        && liveReader(r.members[0]) && liveReader(r.members[1])
+        && !(r.members[1] in get(/databases/$(database)/documents/users/$(r.members[0])).data.blocked)
+        && !(r.members[0] in get(/databases/$(database)/documents/users/$(r.members[1])).data.blocked);
+    }
+    function chatCleanup(id) {
+      return deleting() && relationMember(get(/databases/$(database)/documents/relationships/$(id)).data);
+    }
+    match /chat/{id}/messages/{messageId} {
+      allow get: if chatCleanup(id) || chatAllowed(id);
+      allow list: if bounded(100) && (chatCleanup(id) || chatAllowed(id));
+      allow create: if chatAllowed(id)
+        && request.resource.data.keys().hasOnly(['senderId', 'receiverId', 'text', 'timestamp'])
+        && request.resource.data.senderId == myCode()
+        && request.resource.data.receiverId in get(/databases/$(database)/documents/relationships/$(id)).data.members
+        && request.resource.data.receiverId != myCode()
+        && str(request.resource.data.text, 2000) && request.resource.data.text.size() > 0
+        && request.resource.data.timestamp == request.time;
+      allow delete: if chatCleanup(id);
+    }
+    match /quizAttempts/{id} {
+      allow get: if signedIn() && (resource == null || resource.data.uid == request.auth.uid);
+      allow list: if signedIn() && resource.data.uid == request.auth.uid && bounded(100);
+      allow create: if active() && request.resource.data.keys().hasOnly(['uid', 'friendCode', 'bookId', 'title', 'authors', 'count', 'difficulty', 'chapterScope', 'questions', 'createdAt', 'completed'])
+        && request.resource.data.uid == request.auth.uid && request.resource.data.friendCode == myCode()
+        && request.resource.data.createdAt == request.time && request.resource.data.completed == false
+        && number(request.resource.data.count, 25) && request.resource.data.count >= 5
+        && number(request.resource.data.difficulty, 12) && request.resource.data.difficulty >= 1
+        && str(request.resource.data.bookId, 100) && str(request.resource.data.title, 300)
+        && str(request.resource.data.chapterScope, 160) && request.resource.data.authors is list
+        && request.resource.data.questions is list && request.resource.data.questions.size() == request.resource.data.count;
+      allow update: if active() && resource.data.uid == request.auth.uid && !resource.data.completed
+        && request.time < resource.data.createdAt + duration.value(24, 'h')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed', 'completedAt', 'result'])
+        && request.resource.data.completed == true && request.resource.data.completedAt == request.time
+        && request.resource.data.result is map;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid && deleting();
+    }
+    match /weeklyScores/{week}/players/{code} {
+      allow get: if active();
+      allow list: if active() && bounded(100);
+      allow create, update: if owns(code) && active()
+        && request.resource.data.keys().hasOnly(['friendCode', 'score', 'leagueIndex', 'weekStart', 'weekEnd'])
+        && request.resource.data.friendCode == code && number(request.resource.data.score, 100000000)
+        && number(request.resource.data.leagueIndex, 9)
+        && request.resource.data.weekStart is timestamp && request.resource.data.weekEnd is timestamp
+        && week.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.weekStart == timestamp.date(int(week.split('-')[0]), int(week.split('-')[1]), int(week.split('-')[2]))
+        // 1970-01-01 was Thursday; UTC Mondays have epoch-day remainder four.
+        && int(request.resource.data.weekStart.toMillis() / 86400000) % 7 == 4
+        && request.resource.data.weekEnd == request.resource.data.weekStart + duration.value(7, 'd')
+        && request.time >= request.resource.data.weekStart && request.time < request.resource.data.weekEnd
+        && week == getAfter(/databases/$(database)/documents/users/$(code)).data.league_current_week
+        && request.resource.data.score == getAfter(/databases/$(database)/documents/users/$(code)).data.league_weekly_score
+        && request.resource.data.leagueIndex == getAfter(/databases/$(database)/documents/users/$(code)).data.league_current_index
+        && (resource == null || (resource.data.get('weekStart', request.resource.data.weekStart) == request.resource.data.weekStart
+          && resource.data.get('weekEnd', request.resource.data.weekEnd) == request.resource.data.weekEnd));
+    }
+    match /reports/{id} {
+      allow get, list: if signedIn() && resource.data.reporter == myCode() && (request.method == 'get' || bounded(100));
+      allow create: if active() && request.resource.data.keys().hasOnly(['reporter', 'reported', 'reason', 'timestamp'])
+        && request.resource.data.reporter == myCode() && codeValid(request.resource.data.reported)
+        && request.resource.data.reported != myCode() && liveReader(request.resource.data.reported)
+        && str(request.resource.data.reason, 1000) && request.resource.data.reason.size() > 0
+        && request.resource.data.timestamp == request.time;
+      allow delete: if deleting() && resource.data.reporter == myCode();
+    }
+    match /reported_content/{id} {
+      allow get, list: if signedIn() && resource.data.reporter == myCode() && (request.method == 'get' || bounded(100));
+      allow create: if active() && request.resource.data.keys().hasOnly(['reporter', 'reason', 'attemptId', 'questionIndex', 'question', 'bookId', 'title', 'timestamp'])
+        && request.resource.data.reporter == myCode()
+        && get(/databases/$(database)/documents/quizAttempts/$(request.resource.data.attemptId)).data.uid == request.auth.uid
+        && number(request.resource.data.questionIndex, 24)
+        && request.resource.data.question == get(/databases/$(database)/documents/quizAttempts/$(request.resource.data.attemptId)).data.questions[request.resource.data.questionIndex]
+        && str(request.resource.data.reason, 1000) && request.resource.data.reason.size() > 0
+        && str(request.resource.data.title, 300) && str(request.resource.data.bookId, 100)
+        && request.resource.data.timestamp == request.time;
+      allow delete: if deleting() && resource.data.reporter == myCode();
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
